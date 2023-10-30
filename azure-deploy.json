@@ -1,0 +1,112 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.22.6.54827",
+      "templateHash": "10445117901070578453"
+    }
+  },
+  "parameters": {
+    "rgName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "mspOfferName": "offer",
+    "mspOfferDescription": "desc",
+    "managedByTenantId": "5f9e748d-300b-48f1-85f5-3aa96d6260cb",
+    "serviceProviderPrincipalId": "8cdea44d-38fe-4e3c-bf2a-6b96809d1d27",
+    "serviceProviderPrincipalDisplayName": "managed-app-admins",
+    "roles": {
+      "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+      "UserAccessAdministrator": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9",
+      "BlobDataContributor": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+      "BlobDataOwner": "b7e6dc6d-f1e8-4753-8033-0f276bb0955b"
+    },
+    "authorizations": [
+      {
+        "principalId": "[variables('serviceProviderPrincipalId')]",
+        "principalIdDisplayName": "[variables('serviceProviderPrincipalDisplayName')]",
+        "roleDefinitionId": "[variables('roles').Contributor]"
+      },
+      {
+        "principalId": "[variables('serviceProviderPrincipalId')]",
+        "principalIdDisplayName": "[variables('serviceProviderPrincipalDisplayName')]",
+        "roleDefinitionId": "[variables('roles').UserAccessAdministrator]",
+        "delegatedRoleDefinitionIds": [
+          "[variables('roles').BlobDataOwner]",
+          "[variables('roles').BlobDataContributor]"
+        ]
+      }
+    ],
+    "mspRegistrationName": "[guid(variables('mspOfferName'))]",
+    "mspAssignmentName": "[guid(variables('mspOfferName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedServices/registrationDefinitions",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('mspRegistrationName')]",
+      "properties": {
+        "registrationDefinitionName": "[variables('mspOfferName')]",
+        "description": "[variables('mspOfferDescription')]",
+        "managedByTenantId": "[variables('managedByTenantId')]",
+        "authorizations": "[variables('authorizations')]"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "rgAssignment",
+      "resourceGroup": "[parameters('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "mspRegistrationName": {
+            "value": "[subscriptionResourceId('Microsoft.ManagedServices/registrationDefinitions', variables('mspRegistrationName'))]"
+          },
+          "mspAssignmentName": {
+            "value": "[variables('mspAssignmentName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.22.6.54827",
+              "templateHash": "6590764620309954267"
+            }
+          },
+          "parameters": {
+            "mspRegistrationName": {
+              "type": "string"
+            },
+            "mspAssignmentName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedServices/registrationAssignments",
+              "apiVersion": "2019-06-01",
+              "name": "[parameters('mspAssignmentName')]",
+              "properties": {
+                "registrationDefinitionId": "[parameters('mspRegistrationName')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.ManagedServices/registrationDefinitions', variables('mspRegistrationName'))]"
+      ]
+    }
+  ]
+}
