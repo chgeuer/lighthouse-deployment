@@ -67,11 +67,10 @@
         "type": "Microsoft.Authorization/roleAssignments",
         "apiVersion": "2020-04-01-preview",
         "scope": "[parameters('resourceResourceId')]",
-        "name": "[guid(identityResourceId, resourceResourceId, rbacRoleDefinitionId)]",
+        "name": "[guid(parameters('identityResourceId'), parameters('resourceResourceId'), parameters('rbacRoleDefinitionId'))]",
         "properties": {
-          "description": "[format('{0} should be BlobDataOwner on the {1} storage account', variables('names').identity.runtime, parameters('storageName'))]",
           "principalType": "ServicePrincipal",
-          "principalId": "[reference(identityResourceId, '2018-11-30').principalId]",
+          "principalId": "[reference(parameters('identityResourceId'), '2018-11-30').principalId]",
           "delegatedManagedIdentityResourceId": "[parameters('identityResourceId')]",
           "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('rbacRoleDefinitionId')])]"
         }
