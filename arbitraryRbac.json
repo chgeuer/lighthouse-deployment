@@ -2,13 +2,17 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-      "identityResourceId": {
+      "managedIdentityName": { "type": "string" },
+      "resourceProvider": {
         "type": "string",
-        "defaultValue": "/subscriptions/724467b5-bee4-484b-bf13-d6a5505d2b51/resourceGroups/irina/providers/Microsoft.ManagedIdentity/userAssignedIdentities/createdvialighthouse"
+        "defaultValue": "Microsoft.Storage/storageAccounts",
+        "allowedValues": [
+          "Microsoft.Storage/storageAccounts",
+          "Microsoft.Sql/servers"
+        ]
       },
-      "resourceResourceId": {
-        "type": "string",
-        "defaultValue": "/subscriptions/724467b5-bee4-484b-bf13-d6a5505d2b51/resourceGroups/irina/providers/Microsoft.Storage/storageAccounts/irina1233"
+      "resourceName": {
+        "type": "string"
       },
       "rbacRoleDefinitionId": {
         "type": "string",
@@ -399,18 +403,20 @@
           "Role Based Access Control Administrator (Preview)": "f58310d9-a9f6-439a-9e8d-f62e7b41a168",
           "Template Spec Reader": "392ae280-861d-42bd-9ea5-08ee6d83b80e",
           "Template Spec Contributor": "1c9b6475-caf0-4164-b5a1-2142a7116f4b"
-        }
+        }, 
+        "resourceResourceId": "[format('{0}/providers/{1}/{2}', resourceGroup().id, parameters('resourceProvider'), parameters('resourceName'))]",
+        "identityResourceId": "[format('{0}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{1}', resourceGroup().id, parameters('managedIdentityName'))]"
     },
     "resources": [
       {
         "type": "Microsoft.Authorization/roleAssignments",
         "apiVersion": "2020-04-01-preview",
-        "scope": "[parameters('resourceResourceId')]",
-        "name": "[guid(parameters('identityResourceId'), parameters('resourceResourceId'), parameters('rbacRoleDefinitionId'))]",
+        "scope": "[variables('resourceResourceId')]",
+        "name": "[guid(variables('identityResourceId'), variables('resourceResourceId'), parameters('rbacRoleDefinitionId'))]",
         "properties": {
           "principalType": "ServicePrincipal",
-          "principalId": "[reference(parameters('identityResourceId'), '2018-11-30').principalId]",
-          "delegatedManagedIdentityResourceId": "[parameters('identityResourceId')]",
+          "principalId": "[reference(variables('identityResourceId'), '2018-11-30').principalId]",
+          "delegatedManagedIdentityResourceId": "[variables('identityResourceId')]",
           "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('rbacRoleDefinitionId')])]"
         }
       }
